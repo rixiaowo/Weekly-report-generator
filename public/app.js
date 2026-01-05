@@ -57,9 +57,12 @@ function bindEvents() {
     elements.copyBtn.addEventListener('click', copyReport);
     elements.downloadBtn.addEventListener('click', downloadReport);
 
-    // 保存配置到本地存储
+    // 保存配置到本地存储（任意配置变更时自动保存）
     elements.apiBaseUrl.addEventListener('change', saveConfig);
     elements.repoPath.addEventListener('change', saveConfig);
+    elements.modelName.addEventListener('change', saveConfig);
+    elements.apiKey.addEventListener('change', saveConfig);
+    elements.author.addEventListener('change', saveConfig);
 }
 
 // 加载保存的配置
@@ -71,6 +74,9 @@ function loadSavedConfig() {
             if (config.apiBaseUrl) elements.apiBaseUrl.value = config.apiBaseUrl;
             if (config.repoPath) elements.repoPath.value = config.repoPath;
             if (config.modelName) elements.modelName.value = config.modelName;
+            if (config.apiKey) elements.apiKey.value = config.apiKey;
+            if (config.author) elements.author.value = config.author;
+            console.log('✓ 已加载保存的配置');
         } catch (e) {
             console.error('加载配置失败:', e);
         }
@@ -82,9 +88,12 @@ function saveConfig() {
     const config = {
         apiBaseUrl: elements.apiBaseUrl.value,
         repoPath: elements.repoPath.value,
-        modelName: elements.modelName.value
+        modelName: elements.modelName.value,
+        apiKey: elements.apiKey.value,
+        author: elements.author.value
     };
     localStorage.setItem('weeklyReportConfig', JSON.stringify(config));
+    console.log('✓ 配置已保存');
 }
 
 // 验证仓库
