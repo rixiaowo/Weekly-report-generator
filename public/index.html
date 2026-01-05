@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Git 周报生成器</title>
+  <meta name="description" content="根据 Git 提交记录，使用 AI 智能生成专业周报">
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+  <div class="app">
+    <!-- Header -->
+    <header class="header">
+      <div class="logo">
+        <span class="logo-icon">📊</span>
+        <h1>Git 周报生成器</h1>
+      </div>
+      <p class="tagline">智能分析提交记录，一键生成专业周报</p>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main">
+      <!-- Configuration Panel -->
+      <section class="config-panel glass-card">
+        <h2 class="section-title">
+          <span class="icon">⚙️</span>
+          配置信息
+        </h2>
+
+        <div class="form-grid">
+          <!-- Repository Path -->
+          <div class="form-group full-width">
+            <label for="repoPath">Git 仓库路径</label>
+            <div class="input-with-button">
+              <input type="text" id="repoPath" placeholder="/path/to/your/project" />
+              <button type="button" id="validateBtn" class="btn-secondary">验证</button>
+            </div>
+            <span class="hint" id="repoStatus"></span>
+          </div>
+
+          <!-- Author -->
+          <div class="form-group">
+            <label for="author">作者（可选）</label>
+            <input type="text" id="author" placeholder="留空使用 Git 配置的用户名" />
+          </div>
+
+          <!-- Date Range -->
+          <div class="form-group">
+            <label>日期范围</label>
+            <div class="date-range">
+              <input type="date" id="startDate" />
+              <span class="date-separator">至</span>
+              <input type="date" id="endDate" />
+            </div>
+          </div>
+        </div>
+
+        <!-- API Configuration -->
+        <div class="api-config">
+          <h3 class="subsection-title">
+            <span class="icon">🤖</span>
+            AI 配置（可选）
+          </h3>
+          <p class="api-hint">配置后将使用 AI 智能生成周报，不配置则生成基础格式周报</p>
+
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="apiBaseUrl">API Base URL</label>
+              <input type="text" id="apiBaseUrl" placeholder="https://ark.cn-beijing.volces.com/api/v3" />
+            </div>
+            <div class="form-group">
+              <label for="apiKey">API Key</label>
+              <input type="password" id="apiKey" placeholder="你的 API Key" />
+            </div>
+            <div class="form-group full-width">
+              <label for="modelName">模型名称</label>
+              <input type="text" id="modelName" placeholder="deepseek-v3-1-250821（火山引擎示例）" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="actions">
+          <button type="button" id="previewBtn" class="btn-secondary">
+            <span class="btn-icon">👁️</span>
+            预览提交
+          </button>
+          <button type="button" id="generateBtn" class="btn-primary">
+            <span class="btn-icon">✨</span>
+            生成周报
+          </button>
+        </div>
+      </section>
+
+      <!-- Preview Panel -->
+      <section class="preview-panel glass-card" id="previewPanel" style="display: none;">
+        <h2 class="section-title">
+          <span class="icon">📋</span>
+          提交记录预览
+          <span class="commit-count" id="commitCount">0 条</span>
+        </h2>
+        <div class="commits-list" id="commitsList"></div>
+      </section>
+
+      <!-- Report Panel -->
+      <section class="report-panel glass-card" id="reportPanel" style="display: none;">
+        <div class="report-header">
+          <h2 class="section-title">
+            <span class="icon">📄</span>
+            生成的周报
+          </h2>
+          <div class="report-actions">
+            <button type="button" id="copyBtn" class="btn-icon-only" title="复制">📋</button>
+            <button type="button" id="downloadBtn" class="btn-icon-only" title="下载">💾</button>
+          </div>
+        </div>
+        <div class="report-content" id="reportContent"></div>
+      </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <p>使用 ❤️ 构建 | 支持 OpenAI 兼容 API</p>
+    </footer>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay" style="display: none;">
+      <div class="loading-spinner"></div>
+      <p class="loading-text" id="loadingText">正在生成周报...</p>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+
+</html>
