@@ -4,10 +4,12 @@
 
 ## 功能特点
 
-- 📊 **可视化界面** - 现代化 Web UI，操作简单
-- 🔧 **自定义配置** - 支持自定义仓库路径、日期范围
-- 🤖 **AI 智能生成** - 集成 OpenAI 兼容 API，智能总结提交内容
-- 📝 **详细变更** - 读取每个提交的具体变更文件
+- 📊 **可视化界面** - 现代化 Web UI，深色主题
+- 📁 **多项目支持** - 同时管理多个 Git 仓库
+- 🔄 **所有分支** - 读取本地所有分支的提交记录
+- 🤖 **AI 智能生成** - 集成 OpenAI 兼容 API（火山引擎、通义千问等）
+- 💾 **配置缓存** - 项目列表和 API 配置自动保存到本地
+- 📝 **详细变更** - 读取每个提交的具体变更文件和 diff
 
 ## 快速开始
 
@@ -32,81 +34,74 @@ npm run server
 
 ### Web 界面使用
 
-1. **输入仓库路径** - 输入本地 Git 仓库的完整路径
-2. **选择日期范围** - 默认为过去 7 天
-3. **配置 AI（可选）**
-   - API Base URL: 例如 `https://api.openai.com/v1`
+1. **添加项目** - 输入本地 Git 仓库路径，点击「➕ 添加」
+2. **支持多项目** - 可添加多个仓库，生成汇总周报
+3. **选择日期范围** - 默认为过去 7 天
+4. **配置 AI（可选）**
+   - API Base URL: 例如 `https://ark.cn-beijing.volces.com/api/v3`
    - API Key: 你的 API 密钥
-4. **点击生成周报** - 查看并下载生成的周报
+   - 模型名称: 例如 `deepseek-v3-1-250821`
+5. **点击生成周报** - 查看并下载生成的周报
+
+### 配置自动保存
+
+以下配置会自动保存到浏览器本地，刷新页面后自动恢复：
+- 项目列表
+- API Base URL / API Key / 模型名称
+- 作者名称
 
 ### 支持的 AI 服务
 
-支持所有 OpenAI 兼容的 API，包括：
+支持所有 OpenAI 兼容的 API：
 
-| 服务 | Base URL |
-|------|----------|
-| OpenAI | `https://api.openai.com/v1` |
-| 通义千问 | `https://dashscope.aliyuncs.com/compatible-mode/v1` |
-| 文心一言 | `https://aip.baidubce.com/rpc/2.0/ai_custom/v1/wenxinworkshop` |
-| DeepSeek | `https://api.deepseek.com/v1` |
-| 自定义部署 | 你的服务器地址 |
+| 服务 | Base URL | 模型名称示例 |
+|------|----------|-------------|
+| 火山引擎 | `https://ark.cn-beijing.volces.com/api/v3` | `deepseek-v3-1-250821` |
+| OpenAI | `https://api.openai.com/v1` | `gpt-3.5-turbo` |
+| DeepSeek | `https://api.deepseek.com/v1` | `deepseek-chat` |
+| 通义千问 | `https://dashscope.aliyuncs.com/compatible-mode/v1` | `qwen-turbo` |
 
-## 命令行使用（旧版）
+## 周报格式
 
-```bash
-# 在当前 Git 仓库生成周报
-node index.js
+生成的周报格式如下：
 
-# 指定多个仓库
-node index.js /path/to/repo1 /path/to/repo2
-
-# 自定义配置
-REPORT_DAYS=14 GIT_AUTHOR="Your Name" node index.js
 ```
+本周工作总结:
+1. ai-gansu：
+    a. 添加门票卡片，专题卡片为单独大卡
+    b. 屏蔽大交通卡片，并用缓存数据进行代替
+    c. 添加拍图实景功能
+2. another-project：
+    a. 完成用户认证模块
+
+下周工作计划:
+1. 待规划
+
+其他思考:
+-
+```
+
+## 自定义 Prompt
+
+如需修改 AI 生成周报的提示词，编辑 `lib/llm.js` 文件：
+
+- **主 Prompt**: 搜索 `const prompt =`（约第 24 行）
+- **System Prompt**: 搜索 `role: 'system'`（约第 88 行）
 
 ## 项目结构
 
 ```
 git-weekly-report/
-├── server.js           # Express 服务器
+├── server.js           # Express 服务器（支持多仓库）
 ├── index.js            # CLI 工具（旧版）
 ├── lib/
-│   ├── git.js          # Git 操作模块
-│   └── llm.js          # LLM API 模块
+│   ├── git.js          # Git 操作模块（读取所有分支）
+│   └── llm.js          # LLM API 模块（可自定义 Prompt）
 ├── public/
 │   ├── index.html      # Web 界面
-│   ├── style.css       # 样式文件
-│   └── app.js          # 前端逻辑
+│   ├── style.css       # 深色主题样式
+│   └── app.js          # 前端逻辑（多项目管理）
 └── package.json
-```
-
-## 输出示例
-
-```markdown
-# 周报
-
-**作者:** Your Name
-**时间范围:** 2026-01-01 ~ 2026-01-05
-
----
-
-## 本周工作概述
-
-本周主要完成了用户认证模块的开发和多个 Bug 修复...
-
-## 功能开发
-
-- 完成用户登录/注册功能
-- 添加 JWT 令牌认证
-
-## Bug 修复
-
-- 修复表单验证问题
-- 修复移动端显示异常
-
-## 下周计划
-
-- [ ] 待添加
 ```
 
 ## License
