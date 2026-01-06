@@ -33,48 +33,75 @@ app.post('/api/validate-repo', (req, res) => {
     }
 });
 
-// API: 获取提交记录预览
+// API: 获取提交记录预览（支持多仓库）
 app.post('/api/commits', (req, res) => {
     try {
-        const { repoPath, author, startDate, endDate } = req.body;
+        const { repoPaths, repoPath, author, startDate, endDate } = req.body;
 
-        if (!repoPath) {
-            return res.status(400).json({ error: '请提供仓库路径' });
+        // 支持单个 repoPath 或多个 repoPaths
+        const paths = repoPaths || (repoPath ? [repoPath] : []);
+
+        if (paths.length === 0) {
+            return res.status(400).json({ error: '请提供至少一个仓库路径' });
         }
 
-        if (!isValidGitRepo(repoPath)) {
-            return res.status(400).json({ error: '无效的 Git 仓库路径' });
+        let allCommits = [];
+        for (const path of paths) {
+            if (!isValidGitRepo(path)) {
+                console.warn(`跳过无效仓库: ${path}`);
+                continue;
+            }
+            const commits = getCommitsWithDiff(path, author || '', startDate, endDate);
+            allCommits = allCommits.concat(commits);
         }
 
-        const commits = getCommitsWithDiff(repoPath, author || '', startDate, endDate);
-        res.json({ commits, count: commits.length });
+        // 按日期排序（最新的在前）
+        allCommits.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+        res.json({ commits: allCommits, count: allCommits.length });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 });
 
-// API: 生成周报
+// API: 生成周报（支持多仓库）
 app.post('/api/generate', async (req, res) => {
     try {
-        const { repoPath, author, startDate, endDate, apiKey, apiBaseUrl, modelName } = req.body;
+        const { repoPaths, repoPath, author, startDate, endDate, apiKey, apiBaseUrl, modelName } = req.body;
 
-        if (!repoPath) {
-            return res.status(400).json({ error: '请提供仓库路径' });
+        // 支持单个 repoPath 或多个 repoPaths
+        const paths = repoPaths || (repoPath ? [repoPath] : []);
+
+        if (paths.length === 0) {
+            return res.status(400).json({ error: '请提供至少一个仓库路径' });
         }
 
-        if (!isValidGitRepo(repoPath)) {
-            return res.status(400).json({ error: '无效的 Git 仓库路径' });
+        // 从所有仓库获取提交记录
+        let allCommits = [];
+        let firstValidAuthor = author;
+
+        for (const path of paths) {
+            if (!isValidGitRepo(path)) {
+                console.warn(`跳过无效仓库: ${path}`);
+                continue;
+            }
+            const commits = getCommitsWithDiff(path, author || '', startDate, endDate);
+            allCommits = allCommits.concat(commits);
+
+            if (!firstValidAuthor) {
+                firstValidAuthor = getGitUser(path);
+            }
         }
 
-        // 获取提交记录
-        const commits = getCommitsWithDiff(repoPath, author || '', startDate, endDate);
+        // 按日期排序（最新的在前）
+        allCommits.sort((a, b) => new Date(b.date) - new Date(a.date));
 
         // 生成周报
         let report;
         if (apiKey && apiBaseUrl) {
             // 使用 AI 生成
-            report = await generateWeeklyReport(apiKey, apiBaseUrl, commits, {
-                author: author || getGitUser(repoPath),
+            report = await generateWeeklyReport(apiKey, apiBaseUrl, allCommits, {
+                author: firstValidAuthor || '',
                 startDate,
                 endDate,
                 modelName: modelName || 'gpt-3.5-turbo'
@@ -83,11 +110,11 @@ app.post('/api/generate', async (req, res) => {
             // 不使用 AI，生成基础周报
             const { generateBasicReport } = await import('./lib/llm.js');
             report = generateBasicReport ?
-                generateBasicReport(commits, author || getGitUser(repoPath), startDate, endDate) :
-                await generateWeeklyReport('', '', commits, { author, startDate, endDate });
+                generateBasicReport(allCommits, firstValidAuthor || '', startDate, endDate) :
+                await generateWeeklyReport('', '', allCommits, { author: firstValidAuthor, startDate, endDate });
         }
 
-        res.json({ report, commits: commits.length });
+        res.json({ report, commits: allCommits.length });
     } catch (error) {
         console.error('生成周报失败:', error);
         res.status(500).json({ error: error.message });

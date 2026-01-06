@@ -31,12 +31,15 @@
         </h2>
 
         <div class="form-grid">
-          <!-- Repository Path -->
+          <!-- Repository Paths List -->
           <div class="form-group full-width">
-            <label for="repoPath">Git 仓库路径</label>
-            <div class="input-with-button">
-              <input type="text" id="repoPath" placeholder="/path/to/your/project" />
-              <button type="button" id="validateBtn" class="btn-secondary">验证</button>
+            <label>Git 仓库路径列表</label>
+            <div class="repo-list" id="repoList">
+              <!-- 项目列表将由 JS 动态生成 -->
+            </div>
+            <div class="input-with-button" style="margin-top: 8px;">
+              <input type="text" id="newRepoPath" placeholder="输入项目路径，例如: /path/to/project" />
+              <button type="button" id="addRepoBtn" class="btn-secondary">➕ 添加</button>
             </div>
             <span class="hint" id="repoStatus"></span>
           </div>

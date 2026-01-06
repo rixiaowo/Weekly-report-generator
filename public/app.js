@@ -1,11 +1,16 @@
 /**
  * Git 周报生成器 - 前端应用
+ * 支持多项目管理
  */
+
+// 项目列表
+let repoPaths = [];
 
 // DOM 元素
 const elements = {
-    repoPath: document.getElementById('repoPath'),
-    validateBtn: document.getElementById('validateBtn'),
+    repoList: document.getElementById('repoList'),
+    newRepoPath: document.getElementById('newRepoPath'),
+    addRepoBtn: document.getElementById('addRepoBtn'),
     repoStatus: document.getElementById('repoStatus'),
     author: document.getElementById('author'),
     startDate: document.getElementById('startDate'),
@@ -30,8 +35,9 @@ const elements = {
 // 初始化
 function init() {
     setDefaultDates();
-    bindEvents();
     loadSavedConfig();
+    bindEvents();
+    renderRepoList();
 }
 
 // 设置默认日期范围（过去7天）
@@ -51,7 +57,10 @@ function formatDate(date) {
 
 // 绑定事件
 function bindEvents() {
-    elements.validateBtn.addEventListener('click', validateRepo);
+    elements.addRepoBtn.addEventListener('click', addRepo);
+    elements.newRepoPath.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') addRepo();
+    });
     elements.previewBtn.addEventListener('click', previewCommits);
     elements.generateBtn.addEventListener('click', generateReport);
     elements.copyBtn.addEventListener('click', copyReport);
@@ -59,7 +68,6 @@ function bindEvents() {
 
     // 保存配置到本地存储（任意配置变更时自动保存）
     elements.apiBaseUrl.addEventListener('change', saveConfig);
-    elements.repoPath.addEventListener('change', saveConfig);
     elements.modelName.addEventListener('change', saveConfig);
     elements.apiKey.addEventListener('change', saveConfig);
     elements.author.addEventListener('change', saveConfig);
@@ -72,10 +80,12 @@ function loadSavedConfig() {
         try {
             const config = JSON.parse(saved);
             if (config.apiBaseUrl) elements.apiBaseUrl.value = config.apiBaseUrl;
-            if (config.repoPath) elements.repoPath.value = config.repoPath;
             if (config.modelName) elements.modelName.value = config.modelName;
             if (config.apiKey) elements.apiKey.value = config.apiKey;
             if (config.author) elements.author.value = config.author;
+            if (config.repoPaths && Array.isArray(config.repoPaths)) {
+                repoPaths = config.repoPaths;
+            }
             console.log('✓ 已加载保存的配置');
         } catch (e) {
             console.error('加载配置失败:', e);
@@ -87,39 +97,46 @@ function loadSavedConfig() {
 function saveConfig() {
     const config = {
         apiBaseUrl: elements.apiBaseUrl.value,
-        repoPath: elements.repoPath.value,
         modelName: elements.modelName.value,
         apiKey: elements.apiKey.value,
-        author: elements.author.value
+        author: elements.author.value,
+        repoPaths: repoPaths
     };
     localStorage.setItem('weeklyReportConfig', JSON.stringify(config));
     console.log('✓ 配置已保存');
 }
 
-// 验证仓库
-async function validateRepo() {
-    const repoPath = elements.repoPath.value.trim();
-    if (!repoPath) {
-        showStatus('请输入仓库路径', 'error');
+// 添加项目
+async function addRepo() {
+    const path = elements.newRepoPath.value.trim();
+    if (!path) {
+        showStatus('请输入项目路径', 'error');
         return;
     }
 
-    showLoading('正在验证仓库...');
+    // 检查是否已存在
+    if (repoPaths.includes(path)) {
+        showStatus('该项目已在列表中', 'error');
+        return;
+    }
 
+    // 验证仓库
+    showLoading('正在验证仓库...');
     try {
         const response = await fetch('/api/validate-repo', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ repoPath })
+            body: JSON.stringify({ repoPath: path })
         });
 
         const data = await response.json();
 
         if (data.valid) {
-            showStatus(`✓ 有效的 Git 仓库${data.author ? `，作者: ${data.author}` : ''}`, 'success');
-            if (data.author && !elements.author.value) {
-                elements.author.value = data.author;
-            }
+            repoPaths.push(path);
+            elements.newRepoPath.value = '';
+            renderRepoList();
+            saveConfig();
+            showStatus(`✓ 已添加: ${path.split('/').pop()}`, 'success');
         } else {
             showStatus(`✗ ${data.error}`, 'error');
         }
@@ -130,7 +147,37 @@ async function validateRepo() {
     }
 }
 
-// 显示仓库状态
+// 删除项目
+function removeRepo(index) {
+    repoPaths.splice(index, 1);
+    renderRepoList();
+    saveConfig();
+}
+
+// 渲染项目列表
+function renderRepoList() {
+    if (repoPaths.length === 0) {
+        elements.repoList.innerHTML = `
+            <div class="repo-list-empty">
+                暂无项目，请在下方添加 Git 仓库路径
+            </div>
+        `;
+        return;
+    }
+
+    elements.repoList.innerHTML = repoPaths.map((path, index) => {
+        const name = path.split('/').pop();
+        return `
+            <div class="repo-item">
+                <span class="repo-name">📁 ${escapeHtml(name)}</span>
+                <span class="repo-path">${escapeHtml(path)}</span>
+                <button class="btn-remove" onclick="removeRepo(${index})" title="删除">✕</button>
+            </div>
+        `;
+    }).join('');
+}
+
+// 显示状态
 function showStatus(message, type) {
     elements.repoStatus.textContent = message;
     elements.repoStatus.className = 'hint ' + type;
@@ -138,12 +185,12 @@ function showStatus(message, type) {
 
 // 预览提交
 async function previewCommits() {
-    const config = getConfig();
-    if (!config.repoPath) {
-        showToast('请输入仓库路径', 'error');
+    if (repoPaths.length === 0) {
+        showToast('请先添加至少一个项目', 'error');
         return;
     }
 
+    const config = getConfig();
     showLoading('正在获取提交记录...');
 
     try {
@@ -177,40 +224,40 @@ async function previewCommits() {
 function renderCommits(commits) {
     if (commits.length === 0) {
         elements.commitsList.innerHTML = `
-      <div class="commit-item">
-        <p style="color: var(--text-muted); text-align: center;">
-          该时间范围内暂无提交记录
-        </p>
-      </div>
-    `;
+            <div class="commit-item">
+                <p style="color: var(--text-muted); text-align: center;">
+                    该时间范围内暂无提交记录
+                </p>
+            </div>
+        `;
         return;
     }
 
     elements.commitsList.innerHTML = commits.map(commit => `
-    <div class="commit-item">
-      <div class="commit-header">
-        <span class="commit-message">${escapeHtml(commit.message)}</span>
-        <span class="commit-date">${commit.date}</span>
-      </div>
-      <div class="commit-repo">📁 ${escapeHtml(commit.repo)}</div>
-      ${commit.files && commit.files.length > 0 ? `
-        <div class="commit-files">
-          📝 ${commit.files.slice(0, 3).map(f => escapeHtml(f)).join(', ')}
-          ${commit.files.length > 3 ? ` 等 ${commit.files.length} 个文件` : ''}
+        <div class="commit-item">
+            <div class="commit-header">
+                <span class="commit-message">${escapeHtml(commit.message)}</span>
+                <span class="commit-date">${commit.date}</span>
+            </div>
+            <div class="commit-repo">📁 ${escapeHtml(commit.repo)}</div>
+            ${commit.files && commit.files.length > 0 ? `
+                <div class="commit-files">
+                    📝 ${commit.files.slice(0, 3).map(f => escapeHtml(f)).join(', ')}
+                    ${commit.files.length > 3 ? ` 等 ${commit.files.length} 个文件` : ''}
+                </div>
+            ` : ''}
         </div>
-      ` : ''}
-    </div>
-  `).join('');
+    `).join('');
 }
 
 // 生成周报
 async function generateReport() {
-    const config = getConfig();
-    if (!config.repoPath) {
-        showToast('请输入仓库路径', 'error');
+    if (repoPaths.length === 0) {
+        showToast('请先添加至少一个项目', 'error');
         return;
     }
 
+    const config = getConfig();
     showLoading(config.apiKey ? '正在使用 AI 生成周报...' : '正在生成周报...');
 
     try {
@@ -274,7 +321,7 @@ function downloadReport() {
 // 获取配置
 function getConfig() {
     return {
-        repoPath: elements.repoPath.value.trim(),
+        repoPaths: repoPaths,
         author: elements.author.value.trim(),
         startDate: elements.startDate.value,
         endDate: elements.endDate.value,

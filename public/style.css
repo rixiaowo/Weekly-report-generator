@@ -9,23 +9,23 @@
   --bg-secondary: #1a1a2e;
   --bg-card: rgba(30, 30, 50, 0.7);
   --bg-input: rgba(40, 40, 70, 0.5);
-  
+
   --text-primary: #ffffff;
   --text-secondary: #a0a0c0;
   --text-muted: #6060a0;
-  
+
   --accent-primary: #6366f1;
   --accent-secondary: #8b5cf6;
   --accent-success: #10b981;
   --accent-warning: #f59e0b;
   --accent-error: #ef4444;
-  
+
   --gradient-primary: linear-gradient(135deg, #6366f1, #8b5cf6);
   --gradient-glow: linear-gradient(135deg, rgba(99, 102, 241, 0.3), rgba(139, 92, 246, 0.3));
-  
+
   --border-color: rgba(100, 100, 150, 0.2);
   --border-glow: rgba(99, 102, 241, 0.5);
-  
+
   /* 间距 */
   --spacing-xs: 0.5rem;
   --spacing-sm: 0.75rem;
@@ -33,19 +33,19 @@
   --spacing-lg: 1.5rem;
   --spacing-xl: 2rem;
   --spacing-2xl: 3rem;
-  
+
   /* 圆角 */
   --radius-sm: 0.5rem;
   --radius-md: 0.75rem;
   --radius-lg: 1rem;
   --radius-xl: 1.5rem;
-  
+
   /* 阴影 */
   --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.3);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
   --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
   --shadow-glow: 0 0 20px rgba(99, 102, 241, 0.3);
-  
+
   /* 过渡 */
   --transition-fast: 0.15s ease;
   --transition-normal: 0.3s ease;
@@ -54,7 +54,9 @@
 /* ========================================
    Reset & Base
 ======================================== */
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
@@ -71,7 +73,7 @@ body {
   color: var(--text-primary);
   line-height: 1.6;
   min-height: 100vh;
-  background-image: 
+  background-image:
     radial-gradient(ellipse at top left, rgba(99, 102, 241, 0.15), transparent 50%),
     radial-gradient(ellipse at bottom right, rgba(139, 92, 246, 0.1), transparent 50%);
 }
@@ -111,8 +113,15 @@ body {
 }
 
 @keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-8px); }
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-8px);
+  }
 }
 
 .header h1 {
@@ -251,6 +260,68 @@ input::placeholder {
 }
 
 .date-separator {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+/* ========================================
+   Repository List
+======================================== */
+.repo-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.repo-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-sm) var(--spacing-md);
+  transition: var(--transition-fast);
+}
+
+.repo-item:hover {
+  border-color: var(--accent-primary);
+}
+
+.repo-item .repo-path {
+  flex: 1;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.repo-item .repo-name {
+  font-weight: 500;
+  color: var(--accent-secondary);
+  margin-right: var(--spacing-xs);
+}
+
+.repo-item .btn-remove {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 0 var(--spacing-xs);
+  transition: var(--transition-fast);
+}
+
+.repo-item .btn-remove:hover {
+  color: var(--accent-error);
+}
+
+.repo-list-empty {
+  text-align: center;
+  padding: var(--spacing-lg);
   color: var(--text-muted);
   font-size: 0.875rem;
 }
@@ -448,7 +519,9 @@ input::placeholder {
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .loading-text {
@@ -507,16 +580,16 @@ input::placeholder {
   .form-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .actions {
     flex-direction: column;
   }
-  
+
   .date-range {
     flex-direction: column;
     align-items: stretch;
   }
-  
+
   .input-with-button {
     flex-direction: column;
   }
